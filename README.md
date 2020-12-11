@@ -37,6 +37,8 @@ bob@aol.com >> cd ..
 
 This tool assumes that you have a Choirless API running on http://localhost:3000. Here's how to do that:
 
+![schematic](https://github.com/Choirless/choirlessshell/blob/main/choirlessshell.png?raw=true)
+
 Clone the `choirlessapi` repo
 
 ```sh
