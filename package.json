@@ -1,0 +1,29 @@
+{
+  "name": "choirlessshell",
+  "version": "1.0.9",
+  "description": "A tool to interact with the choirless API",
+  "scripts": {
+    "standard": "standard --fix",
+    "start": "node app.js",
+    "test": "standard"
+  },
+  "dependencies": {
+    "ascii-tree": "0.3.0",
+    "axios": "0.21.0",
+    "shell": "https://github.com/glynnbird/node-shell.git"
+  },
+  "repository": "https://github.com/glynnbird/couchshell.git",
+  "keywords": [
+    "choirless",
+    "shell",
+    "command-line"
+  ],
+  "author": "Glynn Bird",
+  "license": "MIT",
+  "bin": {
+    "couchshell": "app.js"
+  },
+  "devDependencies": {
+    "standard": "^16.0.2"
+  }
+}
