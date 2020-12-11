@@ -5,8 +5,8 @@ A command-line shell that allows you to deal with Choirless users/choirs/songs/p
 e.g.
 
 ```
-**>>** 
-**>>** cd bob@aol.com
+>> 
+>> cd bob@aol.com
 bob@aol.com >> ll
 001jqAp211hJM10gdxDs3ifaNF3gR9tk - The Dog Choir
 001jtqPK3709Op2285kQ27t8Jc30NULC - The Cat Choir
