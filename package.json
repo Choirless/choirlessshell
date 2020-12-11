@@ -11,7 +11,7 @@
     "axios": "0.21.0",
     "shell": "https://github.com/glynnbird/node-shell.git"
   },
-  "repository": "https://github.com/glynnbird/couchshell.git",
+  "repository": "https://github.com/Choirless/choirlessshell.git",
   "keywords": [
     "choirless",
     "shell",
