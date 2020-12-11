@@ -8,7 +8,6 @@
     "test": "standard"
   },
   "dependencies": {
-    "ascii-tree": "0.3.0",
     "axios": "0.21.0",
     "shell": "https://github.com/glynnbird/node-shell.git"
   },
