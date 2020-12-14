@@ -189,6 +189,14 @@ ok: part unhidden
 bob@aol.com/The Dog Choir/Biscuits! >>
 ```
 
+## `audio <id> <flag>` - mark song part as "audio only" or not
+
+```
+bob@aol.com/The Dog Choir/Biscuits! >> audio 001kHpUj3mKUC60vg8Sy08qaN21voG9H true
+ok: part audio
+bob@aol.com/The Dog Choir/Biscuits! >>
+```
+
 ## `open` - opens the current song/choir in the web interface
 
 ```

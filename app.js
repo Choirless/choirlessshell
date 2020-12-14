@@ -386,6 +386,28 @@ app.cmd('hide :id', 'hide song parts', function (req, res, next) {
   }
 })
 
+// audio
+app.cmd('audio :id :flag', 'audio only song parts', function (req, res, next) {
+  const flag = req.params.flag === 'true'
+  switch (appsettings.path.length) {
+    // level 3 - we know which user/choir/song we are dealing with
+    case 3:
+      callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, audio: flag })
+        .then((response) => {
+          console.log('ok: audio part')
+          res.prompt()
+        })
+        .catch((e) => {
+          res.red('could not audio part\n')
+          res.prompt()
+        })
+      break
+    default:
+      res.red('cannot run audio in this directory\n')
+      break
+  }
+})
+
 // unhide
 app.cmd('unhide :id', 'unhide song parts', function (req, res, next) {
   switch (appsettings.path.length) {
