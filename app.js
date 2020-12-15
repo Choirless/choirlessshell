@@ -53,7 +53,8 @@ const progress = (message, p, ptotal, last) => {
   const block = String.fromCharCode(0x25a0)
   const emptyBlock = String.fromCharCode(0x25a1)
   const str = '  ' + message.padEnd(34) + block.repeat(squares).padEnd(20, emptyBlock) + ' ' + p + '/' + ptotal
-  process.stdout.write(str + last ? '\n' : '\r')
+  const endline = last ? '\n' : '\r'
+  process.stdout.write(str + endline)
 }
 
 // Initialization
