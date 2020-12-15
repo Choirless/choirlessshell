@@ -2,6 +2,7 @@
 const Shell = require('shell')
 const axios = require('axios').default
 const URL = require('url').URL
+const fs = require('fs')
 const { exec } = require('child_process')
 
 const appsettings = {
@@ -29,6 +30,30 @@ const callAPI = async (method, path, body, qs) => {
   } catch (e) {
     throw (new Error(e))
   }
+}
+
+// download a file using axios
+const downloadFile = async (url, filename) => {
+  const writer = fs.createWriteStream(filename)
+  const response = await axios({
+    url,
+    method: 'GET',
+    responseType: 'stream'
+  })
+  response.data.pipe(writer)
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve)
+    writer.on('error', reject)
+  })
+}
+
+// progress meter
+const progress = (message, p, ptotal, last) => {
+  const squares = Math.floor((p / ptotal) * 20)
+  const block = String.fromCharCode(0x25a0)
+  const emptyBlock = String.fromCharCode(0x25a1)
+  const str = '  ' + message.padEnd(34) + block.repeat(squares).padEnd(20, emptyBlock) + ' ' + p + '/' + ptotal
+  process.stdout.write(str + last ? '\n' : '\r')
 }
 
 // Initialization
@@ -429,7 +454,7 @@ app.cmd('unhide :id', 'unhide song parts', function (req, res, next) {
   }
 })
 
-// unhide
+// open
 app.cmd('open', 'open in the web interface', function (req, res, next) {
   let u
   switch (appsettings.path.length) {
@@ -451,6 +476,62 @@ app.cmd('open', 'open in the web interface', function (req, res, next) {
       u = 'https://www.choirless.com'
       exec(`open ${u}`)
       console.log('ok: opened choirless')
+      res.prompt()
+      break
+  }
+})
+
+// download all
+app.cmd('download all', 'download all song parts', async function (req, res, next) {
+  let response
+  switch (appsettings.path.length) {
+    case 3:
+      try {
+        response = await callAPI('get', '/choir/songparts', undefined, { choirId: appsettings.choir.choirId, songId: appsettings.song.songId })
+        console.log(`downloading ${response.parts.length} song parts`)
+        for (const i in response.parts) {
+          const part = response.parts[i]
+          const partId = part.partId
+          const downloadURL = await callAPI('post', '/choir/songpart/download', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: partId }, {})
+          const filename = [partId, part.userName.replace(/ /g, '_')].join('_') + '.webm'
+          const counter = parseInt(i) + 1
+          progress(partId, counter, response.parts.length)
+          await downloadFile(downloadURL.url, filename)
+        }
+        progress('complete', response.parts.length, response.parts.length, true)
+        console.log('\n')
+        res.prompt()
+      } catch (e) {
+        res.red('could not list songs\n')
+        res.prompt()
+      }
+      break
+    default:
+      res.red('cannot download from here\n')
+      res.prompt()
+      break
+  }
+})
+
+// download a single song part
+app.cmd('download :id', 'download a song part', async function (req, res, next) {
+  switch (appsettings.path.length) {
+    case 3:
+      try {
+        console.log('downloading song part')
+        const partId = req.params.id
+        const downloadURL = await callAPI('post', '/choir/songpart/download', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: partId }, {})
+        const filename = partId + '.webm'
+        await downloadFile(downloadURL.url, filename)
+        console.log('download complete')
+        res.prompt()
+      } catch (e) {
+        res.red('could not download song part\n')
+        res.prompt()
+      }
+      break
+    default:
+      res.red('cannot download from here\n')
       res.prompt()
       break
   }

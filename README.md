@@ -204,3 +204,20 @@ bob@aol.com/The Dog Choir/Biscuits! >> open
 ok: opened song in web browser
 bob@aol.com/The Dog Choir/Biscuits! >>
 ```
+
+## `download all` - downloads all the song parts
+
+```
+bob@aol.com/The Dog Choir/Biscuits! >> download all
+C1kjQjM1vO0pU1zPM1t1GqwMs4DrHTD  ■■■□□□□□□□□□□□□□□□□□ 3/20
+bob@aol.com/The Dog Choir/Biscuits! >>
+```
+
+## `download <id>` - downloads a single song part
+
+```
+bob@aol.com/The Dog Choir/Biscuits! >> download 001kHpUj3mKUC60vg8Sy08qaN21voG9H
+downloading song part
+download complete
+bob@aol.com/The Dog Choir/Biscuits! >>
+```
