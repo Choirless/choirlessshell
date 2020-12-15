@@ -96,7 +96,8 @@ const formatDate = (date) => {
   return d.toISOString().substr(0, 10)
 }
 
-app.cmd('cd ..', 'Up one', function (req, res, next) {
+// change to parent directory
+app.cmd('cd ..', 'change to parent directory', function (req, res, next) {
   if (appsettings.path.length > 0) {
     appsettings.path.pop()
     appsettings.pathids.pop()
@@ -106,7 +107,26 @@ app.cmd('cd ..', 'Up one', function (req, res, next) {
   res.prompt()
 })
 
-app.cmd('url :url', 'set url', function (req, res, next) {
+// change to top directory
+app.cmd('cd ~', 'change to root directory', function (req, res, next) {
+  appsettings.path = []
+  appsettings.pathids = []
+  appsettings.autocomplete = []
+  app.set('prompt', formatPath())
+  res.prompt()
+})
+
+// change to top directory
+app.cmd('cd /', 'change to root directory', function (req, res, next) {
+  appsettings.path = []
+  appsettings.pathids = []
+  appsettings.autocomplete = []
+  app.set('prompt', formatPath())
+  res.prompt()
+})
+
+// jump to specific /choir/song from a Choirless URL
+app.cmd('url :url', 'set url', async function (req, res, next) {
   let u
 
   // parse
@@ -136,74 +156,69 @@ app.cmd('url :url', 'set url', function (req, res, next) {
   appsettings.path = ['-']
   appsettings.pathids = [null]
   appsettings.autocomplete = []
-  callAPI('get', '/choir', undefined, { choirId: choirId })
-    .then((response) => {
-      appsettings.path.push(response.choir.name)
-      appsettings.pathids.push(choirId)
-      appsettings.choir = response.choir
-      return callAPI('get', '/choir/song', undefined, { choirId: choirId, songId: songId })
-    })
-    .then((response) => {
-      appsettings.path.push(response.song.name)
-      appsettings.pathids.push(songId)
-      appsettings.song = response.song
-      app.set('prompt', formatPath())
-      res.prompt()
-    })
+
+  let response = await callAPI('get', '/choir', undefined, { choirId: choirId })
+  appsettings.path.push(response.choir.name)
+  appsettings.pathids.push(choirId)
+  appsettings.choir = response.choir
+  response = await callAPI('get', '/choir/song', undefined, { choirId: choirId, songId: songId })
+  appsettings.path.push(response.song.name)
+  appsettings.pathids.push(songId)
+  appsettings.song = response.song
+  app.set('prompt', formatPath())
+  res.prompt()
 })
 
 // change directory
-app.cmd('cd :id', 'change directory', function (req, res, next) {
+app.cmd('cd :id', 'change directory', async function (req, res, next) {
+  let response
   switch (appsettings.path.length) {
     // level 0 - user
     case 0 :
-      callAPI('get', '/user/byemail', undefined, { email: req.params.id })
-        .then((response) => {
-          appsettings.path.push(req.params.id)
-          appsettings.pathids.push(response.user.userId)
-          appsettings.user = response.user
-          app.set('prompt', formatPath())
-          appsettings.autocomplete = []
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('user not found: ' + req.params.id + '\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/user/byemail', undefined, { email: req.params.id })
+        appsettings.path.push(req.params.id)
+        appsettings.pathids.push(response.user.userId)
+        appsettings.user = response.user
+        app.set('prompt', formatPath())
+        appsettings.autocomplete = []
+        res.prompt()
+      } catch (e) {
+        res.red('user not found: ' + req.params.id + '\n')
+        res.prompt()
+      }
       break
 
     // level 1 - choir
     case 1:
-      callAPI('get', '/choir', undefined, { choirId: req.params.id })
-        .then((response) => {
-          appsettings.path.push(response.choir.name)
-          appsettings.pathids.push(req.params.id)
-          appsettings.choir = response.choir
-          app.set('prompt', formatPath())
-          appsettings.autocomplete = []
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('choir not found: ' + req.params.id + '\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/choir', undefined, { choirId: req.params.id })
+        appsettings.path.push(response.choir.name)
+        appsettings.pathids.push(req.params.id)
+        appsettings.choir = response.choir
+        app.set('prompt', formatPath())
+        appsettings.autocomplete = []
+        res.prompt()
+      } catch (e) {
+        res.red('choir not found: ' + req.params.id + '\n')
+        res.prompt()
+      }
       break
 
       // level 2 - song
     case 2:
-      callAPI('get', '/choir/song', undefined, { choirId: appsettings.choir.choirId, songId: req.params.id })
-        .then((response) => {
-          appsettings.path.push(response.song.name)
-          appsettings.pathids.push(req.params.id)
-          appsettings.song = response.song
-          app.set('prompt', formatPath())
-          appsettings.autocomplete = []
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('choir not found: ' + req.params.id + '\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/choir/song', undefined, { choirId: appsettings.choir.choirId, songId: req.params.id })
+        appsettings.path.push(response.song.name)
+        appsettings.pathids.push(req.params.id)
+        appsettings.song = response.song
+        app.set('prompt', formatPath())
+        appsettings.autocomplete = []
+        res.prompt()
+      } catch (e) {
+        res.red('choir not found: ' + req.params.id + '\n')
+        res.prompt()
+      }
       break
     default:
       res.prompt()
@@ -212,7 +227,8 @@ app.cmd('cd :id', 'change directory', function (req, res, next) {
 })
 
 // Command registration
-app.cmd('ll', 'List files', function (req, res, next) {
+app.cmd('ll', 'List files', async function (req, res, next) {
+  let response
   switch (appsettings.path.length) {
     // top level - we don't know email yet
     case 0:
@@ -225,116 +241,110 @@ app.cmd('ll', 'List files', function (req, res, next) {
         res.red('unknown user\n')
         return res.prompt()
       }
-      callAPI('get', '/user/choirs', undefined, { userId: appsettings.user.userId })
-        .then((response) => {
-          appsettings.autocomplete = []
-          for (const i in response.choirs) {
-            const choir = response.choirs[i]
-            res.cyan(choir.choirId + ' - ' + choir.name + '\n')
-            appsettings.autocomplete.push(choir.choirId)
-          }
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not list choirs for this user\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/user/choirs', undefined, { userId: appsettings.user.userId })
+        appsettings.autocomplete = []
+        for (const i in response.choirs) {
+          const choir = response.choirs[i]
+          res.cyan(choir.choirId + ' - ' + choir.name + '\n')
+          appsettings.autocomplete.push(choir.choirId)
+        }
+        res.prompt()
+      } catch (e) {
+        res.red('could not list choirs for this user\n')
+        res.prompt()
+      }
       break
     // level 2 - we know which user/choir we are dealing with
     case 2:
-      callAPI('get', '/choir/songs', undefined, { choirId: appsettings.choir.choirId })
-        .then((response) => {
-          appsettings.autocomplete = []
-          for (const i in response.songs) {
-            const song = response.songs[i]
-            res.cyan(song.songId + ' - ' + song.name + '\n')
-            appsettings.autocomplete.push(song.songId)
-          }
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not list songs\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/choir/songs', undefined, { choirId: appsettings.choir.choirId })
+        appsettings.autocomplete = []
+        for (const i in response.songs) {
+          const song = response.songs[i]
+          res.cyan(song.songId + ' - ' + song.name + '\n')
+          appsettings.autocomplete.push(song.songId)
+        }
+        res.prompt()
+      } catch (e) {
+        res.red('could not list songs\n')
+        res.prompt()
+      }
       break
 
       // level 3 - we know which user/choir/song we are dealing with
     case 3:
-      callAPI('get', '/choir/songparts', undefined, { choirId: appsettings.choir.choirId, songId: appsettings.song.songId })
-        .then((response) => {
-          appsettings.autocomplete = []
-          for (const i in response.parts) {
-            const part = response.parts[i]
-            res.cyan(part.partId + ' ' + formatDate(part.createdOn) + ' ' + part.userName + ' ' + formatOffset(part.offset) + 'ms\n')
-            appsettings.autocomplete.push(part.partId)
-          }
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not list songs\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/choir/songparts', undefined, { choirId: appsettings.choir.choirId, songId: appsettings.song.songId })
+        appsettings.autocomplete = []
+        for (const i in response.parts) {
+          const part = response.parts[i]
+          res.cyan(part.partId + ' ' + formatDate(part.createdOn) + ' ' + part.userName + ' ' + formatOffset(part.offset) + 'ms\n')
+          appsettings.autocomplete.push(part.partId)
+        }
+        res.prompt()
+      } catch (e) {
+        res.red('could not list songs\n')
+        res.prompt()
+      }
       break
   }
 })
 
-// Command registration
-app.cmd('cat :id', 'read files', function (req, res, next) {
+// read file
+app.cmd('cat :id', 'read files', async function (req, res, next) {
+  let response
   switch (appsettings.path.length) {
     // top level - we don't know email yet
     case 0:
-      callAPI('get', '/user/byemail', undefined, { email: req.params.id })
-        .then((response) => {
-          console.log(response.user)
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not cat user\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/user/byemail', undefined, { email: req.params.id })
+        console.log(response.user)
+        res.prompt()
+      } catch (e) {
+        res.red('could not cat user\n')
+        res.prompt()
+      }
       break
     // level 1 - we know which user we're dealing with
     case 1:
-      callAPI('get', '/choir', undefined, { choirId: req.params.id })
-        .then((response) => {
-          console.log(response.choir)
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not cat choir\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/choir', undefined, { choirId: req.params.id })
+        console.log(response.choir)
+        res.prompt()
+      } catch (e) {
+        res.red('could not cat choir\n')
+        res.prompt()
+      }
       break
     // level 2 - we know which user/choir we are dealing with
     case 2:
-      callAPI('get', '/choir/song', undefined, { choirId: appsettings.choir.choirId, songId: req.params.id })
-        .then((response) => {
-          console.log(response.song)
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not cat song\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/choir/song', undefined, { choirId: appsettings.choir.choirId, songId: req.params.id })
+        console.log(response.song)
+        res.prompt()
+      } catch (e) {
+        res.red('could not cat song\n')
+        res.prompt()
+      }
       break
 
       // level 3 - we know which user/choir/song we are dealing with
     case 3:
-      callAPI('get', '/choir/songpart', undefined, { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id })
-        .then((response) => {
-          console.log(response.part)
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not cat songpart\n')
-          res.prompt()
-        })
+      try {
+        response = await callAPI('get', '/choir/songpart', undefined, { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id })
+        console.log(response.part)
+        res.prompt()
+      } catch (e) {
+        res.red('could not cat songpart\n')
+        res.prompt()
+      }
       break
   }
 })
 
 // volume mod
-app.cmd('volume :id :level', 'modify volume', function (req, res, next) {
+app.cmd('volume :id :level', 'modify volume', async function (req, res, next) {
   req.params.level = parseFloat(req.params.level)
   if (req.params.level < 0 || req.params.level > 1) {
     res.red('volume must be between 0 and 1')
@@ -346,15 +356,14 @@ app.cmd('volume :id :level', 'modify volume', function (req, res, next) {
     // level 3 - we know which user/choir/song we are dealing with
     case 3:
 
-      callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, volume: req.params.level })
-        .then((response) => {
-          console.log('ok: volume set to', req.params.level)
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not set volume\n')
-          res.prompt()
-        })
+      try {
+        await callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, volume: req.params.level })
+        console.log('ok: volume set to', req.params.level)
+        res.prompt()
+      } catch (e) {
+        res.red('could not set volume\n')
+        res.prompt()
+      }
       break
     default:
       res.red('cannot run volume in this directory\n')
@@ -363,7 +372,7 @@ app.cmd('volume :id :level', 'modify volume', function (req, res, next) {
 })
 
 // offset mod
-app.cmd('offset :id :level', 'modify offset', function (req, res, next) {
+app.cmd('offset :id :level', 'modify offset', async function (req, res, next) {
   req.params.level = parseFloat(req.params.level)
   if (req.params.level < 0 || req.params.level > 10000) {
     res.red('volume must be between 0 and 10000')
@@ -374,15 +383,14 @@ app.cmd('offset :id :level', 'modify offset', function (req, res, next) {
   switch (appsettings.path.length) {
     // level 3 - we know which user/choir/song we are dealing with
     case 3:
-      callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, offset: req.params.level })
-        .then((response) => {
-          console.log('ok: offset set to', req.params.level)
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not set offset\n')
-          res.prompt()
-        })
+      try {
+        await callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, offset: req.params.level })
+        console.log('ok: offset set to', req.params.level)
+        res.prompt()
+      } catch (e) {
+        res.red('could not set offset\n')
+        res.prompt()
+      }
       break
     default:
       res.red('cannot run offset in this directory\n')
@@ -391,19 +399,18 @@ app.cmd('offset :id :level', 'modify offset', function (req, res, next) {
 })
 
 // hide
-app.cmd('hide :id', 'hide song parts', function (req, res, next) {
+app.cmd('hide :id', 'hide song parts', async function (req, res, next) {
   switch (appsettings.path.length) {
     // level 3 - we know which user/choir/song we are dealing with
     case 3:
-      callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, hidden: true })
-        .then((response) => {
-          console.log('ok: hidden part')
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not hide part\n')
-          res.prompt()
-        })
+      try {
+        await callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, hidden: true })
+        console.log('ok: hidden part')
+        res.prompt()
+      } catch (e) {
+        res.red('could not hide part\n')
+        res.prompt()
+      }
       break
     default:
       res.red('cannot run hide in this directory\n')
@@ -412,20 +419,19 @@ app.cmd('hide :id', 'hide song parts', function (req, res, next) {
 })
 
 // audio
-app.cmd('audio :id :flag', 'audio only song parts', function (req, res, next) {
+app.cmd('audio :id :flag', 'audio only song parts', async function (req, res, next) {
   const flag = req.params.flag === 'true'
   switch (appsettings.path.length) {
     // level 3 - we know which user/choir/song we are dealing with
     case 3:
-      callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, audio: flag })
-        .then((response) => {
-          console.log('ok: audio part')
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not audio part\n')
-          res.prompt()
-        })
+      try {
+        await callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, audio: flag })
+        console.log('ok: audio part')
+        res.prompt()
+      } catch (e) {
+        res.red('could not audio part\n')
+        res.prompt()
+      }
       break
     default:
       res.red('cannot run audio in this directory\n')
@@ -434,19 +440,18 @@ app.cmd('audio :id :flag', 'audio only song parts', function (req, res, next) {
 })
 
 // unhide
-app.cmd('unhide :id', 'unhide song parts', function (req, res, next) {
+app.cmd('unhide :id', 'unhide song parts', async function (req, res, next) {
   switch (appsettings.path.length) {
     // level 3 - we know which user/choir/song we are dealing with
     case 3:
-      callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, hidden: false })
-        .then((response) => {
-          console.log('ok: unhidden part')
-          res.prompt()
-        })
-        .catch((e) => {
-          res.red('could not unhide part\n')
-          res.prompt()
-        })
+      try {
+        await callAPI('post', '/choir/songpart', { choirId: appsettings.choir.choirId, songId: appsettings.song.songId, partId: req.params.id, hidden: false })
+        console.log('ok: unhidden part')
+        res.prompt()
+      } catch (e) {
+        res.red('could not unhide part\n')
+        res.prompt()
+      }
       break
     default:
       res.red('cannot run unhide in this directory\n')
