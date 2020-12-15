@@ -57,6 +57,11 @@ export COUCH_RENDER_DATABASE="render_status"
 export COUCH_USERS_DATABASE="users"
 export COUCH_URL="https://user:password@hostcloudant.com"
 export LOCAL_MODE="true"
+export COS_REGION="eu-gb"
+export COS_ACCESS_KEY_ID="mycosaccesskeyid"
+export COS_ACCESS_KEY_SECRET="mycosaccesskeysecret"
+export COS_DEFAULT_BUCKET="choirless-videos-raw"
+export COS_ENDPOINT="s3.eu-gb.cloud-object-storage.appdomain.cloud"
 npm run server
 ```
 
