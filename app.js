@@ -543,6 +543,24 @@ app.cmd('download :id', 'download a song part', async function (req, res, next) 
   }
 })
 
+// open
+app.cmd('plot :id', 'open sync plot', function (req, res, next) {
+  let u
+  switch (appsettings.path.length) {
+    // level 3 - we know which user/choir/song we are dealing with
+    case 3:
+      u = `https://choirless-videos-debug.s3.eu-gb.cloud-object-storage.appdomain.cloud/${appsettings.choir.choirId}+${appsettings.song.songId}+${req.params.id}-alignment.png`
+      exec(`open ${u}`)
+      console.log('ok: sync plot opened in browser')
+      res.prompt()
+      break
+    default:
+      res.red('Cannot run plot from here')
+      res.prompt()
+      break
+  }
+})
+
 // Event notification
 app.on('quit', function () {
   process.exit()

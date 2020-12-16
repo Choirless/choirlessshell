@@ -226,3 +226,11 @@ downloading song part
 download complete
 bob@aol.com/The Dog Choir/Biscuits! >>
 ```
+
+## `plot <id>` - display sync plot
+
+```
+bob@aol.com/The Dog Choir/Biscuits! >> plot 001kHpUj3mKUC60vg8Sy08qaN21voG9H
+ok: sync plot opened in browser
+bob@aol.com/The Dog Choir/Biscuits! >>
+```
